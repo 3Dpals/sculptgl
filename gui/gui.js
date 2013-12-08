@@ -28,7 +28,10 @@ function Gui(sculptgl)
 
   //files functions
   this.open_ = this.openFile; //open file button (trigger hidden html input...)
-  this.save_ = this.saveFileAsOBJ; //save mesh as OBJ
+  this.saveOBJ_ = this.saveFileAsOBJ; //save mesh as OBJ
+  this.savePLY_ = this.saveFileAsPLY; //save mesh as PLY
+  this.saveSTL_ = this.saveFileAsSTL; //save mesh as STL
+  this.saveInDb_ = this.saveFileInDb; //save mesh as OBJ in DB
 
   //online exporters
   this.keyVerold_ = ''; //verold api key
@@ -90,10 +93,13 @@ Gui.prototype = {
     foldPenTablet.add(main, 'usePenIntensity_').name('Pressure intensity');
 
     //file fold
-    var foldFiles = gui.addFolder('Save / Import');
+    var foldFiles = gui.addFolder('Files (save/import/export)');
     foldFiles.add(main, 'resetSphere_').name('Reset sphere');
+    foldFiles.add(this, 'saveInDb_').name('Save');
     foldFiles.add(this, 'open_').name('Import (obj, ply, stl)');
-    foldFiles.add(this, 'save_').name('Save');
+    foldFiles.add(this, 'saveOBJ_').name('Export (obj)');
+    foldFiles.add(this, 'savePLY_').name('Export (ply)');
+    foldFiles.add(this, 'saveSTL_').name('Export (stl)');
 
     //Verold fold
     var foldVerold = gui.addFolder('Go to Verold !');
@@ -330,9 +336,9 @@ Gui.prototype = {
   {
     $('#backgroundopen').trigger('click');
   },
-
-  /** Save file as OBJ*/
-  saveFileAsOBJ: function ()
+ 
+  /** Save file in Database*/
+  saveFileInDb: function ()
   {
     if (!this.sculptgl_.mesh_)
       return;
@@ -354,11 +360,46 @@ Gui.prototype = {
 			}
 		}
 	});
+  }, 
+  
+
+  /** Save file as OBJ*/
+  saveFileAsOBJ: function ()
+  {
+    if (!this.sculptgl_.mesh_)
+      return;
+    var data = [Export.exportOBJ(this.sculptgl_.mesh_)];
     var blob = new Blob(data,
     {
       type: 'text/plain;charset=utf-8'
     });
     saveAs(blob, 'yourMesh.obj');
+  },
+
+  /** Save file as PLY */
+  saveFileAsPLY: function ()
+  {
+    if (!this.sculptgl_.mesh_)
+      return;
+    var data = [Export.exportPLY(this.sculptgl_.mesh_)];
+    var blob = new Blob(data,
+    {
+      type: 'text/plain;charset=utf-8'
+    });
+    saveAs(blob, 'yourMesh.ply');
+  },
+
+  /** Save file as STL */
+  saveFileAsSTL: function ()
+  {
+    if (!this.sculptgl_.mesh_)
+      return;
+    var data = [Export.exportSTL(this.sculptgl_.mesh_)];
+    var blob = new Blob(data,
+    {
+      type: 'text/plain;charset=utf-8'
+    });
+    saveAs(blob, 'yourMesh.stl');
   },
 
   /** Export to Verold */
