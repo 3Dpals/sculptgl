@@ -28,9 +28,7 @@ function Gui(sculptgl)
 
   //files functions
   this.open_ = this.openFile; //open file button (trigger hidden html input...)
-  this.saveOBJ_ = this.saveFileAsOBJ; //save mesh as OBJ
-  this.savePLY_ = this.saveFileAsPLY; //save mesh as PLY
-  this.saveSTL_ = this.saveFileAsSTL; //save mesh as STL
+  this.save_ = this.saveFileAsOBJ; //save mesh as OBJ
 
   //online exporters
   this.keyVerold_ = ''; //verold api key
@@ -92,12 +90,10 @@ Gui.prototype = {
     foldPenTablet.add(main, 'usePenIntensity_').name('Pressure intensity');
 
     //file fold
-    var foldFiles = gui.addFolder('Files (import/export)');
+    var foldFiles = gui.addFolder('Save / Import');
     foldFiles.add(main, 'resetSphere_').name('Reset sphere');
     foldFiles.add(this, 'open_').name('Import (obj, ply, stl)');
-    foldFiles.add(this, 'saveOBJ_').name('Export (obj)');
-    foldFiles.add(this, 'savePLY_').name('Export (ply)');
-    foldFiles.add(this, 'saveSTL_').name('Export (stl)');
+    foldFiles.add(this, 'save_').name('Save');
 
     //Verold fold
     var foldVerold = gui.addFolder('Go to Verold !');
@@ -341,37 +337,28 @@ Gui.prototype = {
     if (!this.sculptgl_.mesh_)
       return;
     var data = [Export.exportOBJ(this.sculptgl_.mesh_)];
+    
+    $.ajax({
+		url : "api/file/"+fileId+"/content",
+		type : 'PUT',
+		data : {
+			content : data
+		},
+		success : function (html) {
+			if (html) {
+				var myObjects = JSON.parse(html);
+				$('div#returnstatus').append('<div class="alert alert-success alert-dismissable"> <button type="button" class="close" data-dismiss="alert">&times;</button><strong>Success!</strong> File Saved (' + myObjects.status + ').</div>');
+				refreshEmail(newEmail);
+			} else {
+				$('div#returnstatus').append('<div class="alert alert-danger alert-dismissable"> <button type="button" class="close" data-dismiss="alert">&times;</button><strong>Error!</strong> Problem occured</div>');
+			}
+		}
+	});
     var blob = new Blob(data,
     {
       type: 'text/plain;charset=utf-8'
     });
     saveAs(blob, 'yourMesh.obj');
-  },
-
-  /** Save file as PLY */
-  saveFileAsPLY: function ()
-  {
-    if (!this.sculptgl_.mesh_)
-      return;
-    var data = [Export.exportPLY(this.sculptgl_.mesh_)];
-    var blob = new Blob(data,
-    {
-      type: 'text/plain;charset=utf-8'
-    });
-    saveAs(blob, 'yourMesh.ply');
-  },
-
-  /** Save file as STL */
-  saveFileAsSTL: function ()
-  {
-    if (!this.sculptgl_.mesh_)
-      return;
-    var data = [Export.exportSTL(this.sculptgl_.mesh_)];
-    var blob = new Blob(data,
-    {
-      type: 'text/plain;charset=utf-8'
-    });
-    saveAs(blob, 'yourMesh.stl');
   },
 
   /** Export to Verold */
