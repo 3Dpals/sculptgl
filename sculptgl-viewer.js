@@ -44,11 +44,12 @@ SculptGL.indexArrayType = Uint16Array; //typed array for index element (uint16Ar
 
 SculptGL.prototype = {
   /** Initialization */
-  start: function ()
+  start: function (model)
   {
     this.initWebGL();
     this.loadShaders();
     this.onWindowResize();
+    this.model = model;
     this.loadTextures();
     this.initEvents();
   },
@@ -88,11 +89,11 @@ SculptGL.prototype = {
     });
     $canvas[0].addEventListener('webglcontextlost', self.onContextLost, false);
     $canvas[0].addEventListener('webglcontextrestored', self.onContextRestored, false);
-    $(window).keydown(function (event)
+    $canvas.keydown(function (event)
     {
       self.onKeyDown(event);
     });
-    $(window).keyup(function (event)
+    $canvas.keyup(function (event)
     {
       self.onKeyUp(event);
     });
@@ -100,6 +101,9 @@ SculptGL.prototype = {
     {
       self.onWindowResize(event);
     });
+    $canvas.bind('contextmenu', function(e){
+		return false;
+	}); 
   },
 
   /** Load webgl context */
@@ -160,16 +164,16 @@ SculptGL.prototype = {
         gl.bindTexture(gl.TEXTURE_2D, null);
         self.textures_[mode] = idTex;
         if (mode === Render.mode.MATERIAL)
-          self.loadSphere();
+          self.loadModel();
       };
     };
-    loadTex('ressources/clay.jpg', Render.mode.MATERIAL);
-    loadTex('ressources/chavant.jpg', Render.mode.MATERIAL + 1);
-    loadTex('ressources/skin.jpg', Render.mode.MATERIAL + 2);
-    loadTex('ressources/drink.jpg', Render.mode.MATERIAL + 3);
-    loadTex('ressources/redvelvet.jpg', Render.mode.MATERIAL + 4);
-    loadTex('ressources/orange.jpg', Render.mode.MATERIAL + 5);
-    loadTex('ressources/bronze.jpg', Render.mode.MATERIAL + 6);
+    loadTex('sculptgl/ressources/clay.jpg', Render.mode.MATERIAL);
+    loadTex('sculptgl/ressources/chavant.jpg', Render.mode.MATERIAL + 1);
+    loadTex('sculptgl/ressources/skin.jpg', Render.mode.MATERIAL + 2);
+    loadTex('sculptgl/ressources/drink.jpg', Render.mode.MATERIAL + 3);
+    loadTex('sculptgl/ressources/redvelvet.jpg', Render.mode.MATERIAL + 4);
+    loadTex('sculptgl/ressources/orange.jpg', Render.mode.MATERIAL + 5);
+    loadTex('sculptgl/ressources/bronze.jpg', Render.mode.MATERIAL + 6);
   },
 
   /** Load shaders as a string */
@@ -183,25 +187,25 @@ SculptGL.prototype = {
       return shaderXhr.responseText;
     };
     var shaders = this.shaders_;
-    shaders.phongVertex = xhrShader('shaders/phong.vert');
-    shaders.phongFragment = xhrShader('shaders/phong.frag');
-    shaders.transparencyVertex = xhrShader('shaders/transparency.vert');
-    shaders.transparencyFragment = xhrShader('shaders/transparency.frag');
-    shaders.wireframeVertex = xhrShader('shaders/wireframe.vert');
-    shaders.wireframeFragment = xhrShader('shaders/wireframe.frag');
-    shaders.normalVertex = xhrShader('shaders/normal.vert');
-    shaders.normalFragment = xhrShader('shaders/normal.frag');
-    shaders.reflectionVertex = xhrShader('shaders/reflection.vert');
-    shaders.reflectionFragment = xhrShader('shaders/reflection.frag');
-    shaders.backgroundVertex = xhrShader('shaders/background.vert');
-    shaders.backgroundFragment = xhrShader('shaders/background.frag');
+    shaders.phongVertex = xhrShader('sculptgl/shaders/phong.vert');
+    shaders.phongFragment = xhrShader('sculptgl/shaders/phong.frag');
+    shaders.transparencyVertex = xhrShader('sculptgl/shaders/transparency.vert');
+    shaders.transparencyFragment = xhrShader('sculptgl/shaders/transparency.frag');
+    shaders.wireframeVertex = xhrShader('sculptgl/shaders/wireframe.vert');
+    shaders.wireframeFragment = xhrShader('sculptgl/shaders/wireframe.frag');
+    shaders.normalVertex = xhrShader('sculptgl/shaders/normal.vert');
+    shaders.normalFragment = xhrShader('sculptgl/shaders/normal.frag');
+    shaders.reflectionVertex = xhrShader('sculptgl/shaders/reflection.vert');
+    shaders.reflectionFragment = xhrShader('sculptgl/shaders/reflection.frag');
+    shaders.backgroundVertex = xhrShader('sculptgl/shaders/background.vert');
+    shaders.backgroundFragment = xhrShader('sculptgl/shaders/background.frag');
   },
 
   /** Load the sphere */
   loadSphere: function ()
   {
     var sphereXhr = new XMLHttpRequest();
-    sphereXhr.open('GET', 'ressources/sphere.obj', true);
+    sphereXhr.open('GET', 'sculptgl/ressources/sphere.obj', true);
     var self = this;
     sphereXhr.onload = function ()
     {
@@ -210,6 +214,25 @@ SculptGL.prototype = {
     };
     sphereXhr.send(null);
   },
+
+  /** Load the model */
+  loadModel: function ()
+  {
+	var self = this;
+	$.ajax({
+		url : 'api/file/'+self.model.file+'/content',
+		type : 'GET',
+		success : function (html) {
+			self.sphere_ = JSON.parse(html).content;
+			if (!self.sphere_  || self.sphere_ == '') { // Empty model, so we load the default sphere:
+				self.loadSphere();
+			} else {
+				self.resetSphere();
+			}
+		}
+	});
+  },
+
 
   /** Render mesh */
   render: function ()
