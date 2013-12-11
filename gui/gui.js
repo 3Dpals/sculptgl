@@ -348,7 +348,8 @@ Gui.prototype = {
 		url : "api/file/"+this.sculptgl_.model.file+"/content",
 		type : 'PUT',
 		data : {
-			content : data
+			content : data,
+			modelId: modelId
 		},
 		success : function (html) {
 			if (html) {
