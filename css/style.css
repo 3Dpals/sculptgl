@@ -16,6 +16,14 @@ html, body{
   width: 100%;
   display: block;
 }
+#canvas-viewer {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  height: 50%;
+  width: 50%;
+  display: block;
+}
 
 #tablet-plugin {
   position: absolute;

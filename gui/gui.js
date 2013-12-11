@@ -343,7 +343,7 @@ Gui.prototype = {
     if (!this.sculptgl_.mesh_)
       return;
     var data = [Export.exportOBJ(this.sculptgl_.mesh_)];
-    
+    // Saving file:
     $.ajax({
 		url : "api/file/"+fileId+"/content",
 		type : 'PUT',
@@ -354,12 +354,43 @@ Gui.prototype = {
 			if (html) {
 				var myObjects = JSON.parse(html);
 				$('div#returnstatus').append('<div class="alert alert-success alert-dismissable"> <button type="button" class="close" data-dismiss="alert">&times;</button><strong>Success!</strong> File Saved (' + myObjects.status + ').</div>');
-				refreshEmail(newEmail);
+				
 			} else {
 				$('div#returnstatus').append('<div class="alert alert-danger alert-dismissable"> <button type="button" class="close" data-dismiss="alert">&times;</button><strong>Error!</strong> Problem occured</div>');
 			}
 		}
 	});
+	
+	// Saving square thumbnail:
+	var thumbailSize = 200; // TO DO: define somewhere else...
+	var img    = $('#canvas')[0].toDataURL("image/jpg");
+	var xClip = yClip = 0, wClip = hClip = 0;
+	if ($('#canvas').width()/$('#canvas').height() > 1) {
+		hClip = wClip = $('#canvas').height();
+		xClip = ($('#canvas').width() - wClip) / 2;
+	} else {
+		hClip = wClip = $('#canvas').width();
+		yClip = ($('#canvas').height() - hClip) / 2;
+	}
+	var resizerCanvas = $('<canvas/>').width(thumbailSize).height(thumbailSize);
+	resizerCanvas.getContext("2d").drawImage(img,xClip,yClip,wClip,hClip,0,0,thumbailSize,thumbailSize);
+	img    = resizerCanvas.toDataURL("image/jpg");
+    
+    $.ajax({
+		url : "api/file/"+thumbnailId+"/content",
+		type : 'PUT',
+		data : {
+			content : img
+		},
+		success : function (html) {
+			if (!html) {
+				$('div#returnstatus').append('<div class="alert alert-danger alert-dismissable"> <button type="button" class="close" data-dismiss="alert">&times;</button><strong>Error!</strong> Problem occured</div>');
+			}
+		}
+	});
+	
+	
+    }
   }, 
   
 
