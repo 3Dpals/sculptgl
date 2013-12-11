@@ -118,7 +118,8 @@ SculptGL.prototype = {
   {
     var attributes = {
       antialias: false,
-      stencil: true
+      stencil: true,
+      preserveDrawingBuffer: true
     };
     try
     {
@@ -172,7 +173,7 @@ SculptGL.prototype = {
         self.textures_[mode] = idTex;
         if (mode === Render.mode.MATERIAL)
 			if (modelId) {
-				self.loadModel();
+				self.loadModel(modelId);
 			} else {
 				self.loadSphere();
 			}
@@ -229,24 +230,27 @@ SculptGL.prototype = {
   /** Load the model */
   loadModel: function (modelId)
   {
+	var self = this;
 	$.ajax({
-		url : 'api/file/'+modelId,
+		url : 'api/model/'+modelId,
 		type : 'GET',
 		success : function (html) {
-			var model = JSON.parse(html);
-			var url = "model?edit=true&id=" + id;
-			$(location).attr('href', url);
+			self.model = JSON.parse(html);
+			
+			$.ajax({
+				url : 'api/file/'+self.model.file+'/content',
+				type : 'GET',
+				success : function (html) {
+					self.sphere_ = JSON.parse(html).content;
+					if (!self.sphere_  || self.sphere_ == '') { // Empty model, so we load the default sphere:
+						self.loadSphere();
+					} else {
+						self.resetSphere();
+					}
+				}
+			});
 		}
 	});
-	var sphereXhr = new XMLHttpRequest();
-	sphereXhr.open('GET', 'api/file/', true);
-	var self = this;
-	sphereXhr.onload = function ()
-	{
-		self.sphere_ = this.responseText;
-		self.resetSphere();
-	};
-	sphereXhr.send(null);
   },
 
   /** Render mesh */
