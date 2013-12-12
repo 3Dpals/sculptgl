@@ -340,12 +340,13 @@ Gui.prototype = {
   /** Save file in Database*/
   saveFileInDb: function ()
   {
+	  var self = this;
     if (!this.sculptgl_.mesh_)
       return;
-    var data = Export.exportOBJ(this.sculptgl_.mesh_);
+    var data = Export.exportOBJ(self.sculptgl_.mesh_);
     // Saving file:
     $.ajax({
-		url : "api/file/"+this.sculptgl_.model.file+"/content",
+		url : "api/file/"+self.sculptgl_.model.file+"/content",
 		type : 'PUT',
 		data : {
 			content : data,
@@ -363,9 +364,8 @@ Gui.prototype = {
 	});
 	
 	// Saving square thumbnail:
-	var thumbailSize = 200; // TO DO: define somewhere else...
+	var thumbailSize = 300; // TO DO: define somewhere else...
 	var img = new Image();
-	img.src = $('#canvas')[0].toDataURL("image/jpg");
 	var xClip = 0, yClip = 0, wClip = 0, hClip = 0;
 	if ($('#canvas').width()/$('#canvas').height() > 1) {
 		hClip = wClip = $('#canvas').height();
@@ -374,23 +374,29 @@ Gui.prototype = {
 		hClip = wClip = $('#canvas').width();
 		yClip = ($('#canvas').height() - hClip) / 2;
 	}
-	var resizerCanvas = $('<canvas/>').width(thumbailSize).height(thumbailSize)[0];
-	var resizerCtx = resizerCanvas.getContext("2d");
-	resizerCtx.drawImage(img,xClip,yClip,wClip,hClip,0,0,thumbailSize,thumbailSize);
-	img.src = resizerCanvas.toDataURL("image/jpg");
-    
-    $.ajax({
-		url : "api/file/"+this.sculptgl_.model.thumbnail+"/content",
-		type : 'PUT',
-		data : {
-			content : img.src
-		},
-		success : function (html) {
-			if (!html) {
-				$('div#returnstatus').append('<div class="alert alert-danger alert-dismissable"> <button type="button" class="close" data-dismiss="alert">&times;</button><strong>Error!</strong> Problem occured</div>');
-			}
-		}
-	});
+	img.onload = function() {
+		var resizerCanvas = $('<canvas/>')[0];
+		resizerCanvas.width = thumbailSize;
+		resizerCanvas.height = thumbailSize;
+		var resizerCtx = resizerCanvas.getContext("2d");
+		resizerCtx.drawImage(img,xClip,yClip,wClip,hClip,0,0,thumbailSize,thumbailSize);
+		img.onload = function() {
+			$.ajax({
+				url : "api/file/"+self.sculptgl_.model.thumbnail+"/content",
+				type : 'PUT',
+				data : {
+					content : img.src
+				},
+				success : function (html) {
+					if (!html) {
+						$('div#returnstatus').append('<div class="alert alert-danger alert-dismissable"> <button type="button" class="close" data-dismiss="alert">&times;</button><strong>Error!</strong> Problem occured</div>');
+					}
+				}
+			});
+		};
+		img.src = resizerCanvas.toDataURL("image/jpg");
+	};
+	img.src = $('#canvas')[0].toDataURL("image/jpg");
   }, 
   
 
